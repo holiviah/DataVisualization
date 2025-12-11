@@ -378,7 +378,12 @@ function loadSpineModel() {
         'spine.glb',
         (gltf) => handleSpine(gltf.scene),
         undefined,
-        (err) => console.error('Spine load failed:', err)
+        (err) => {
+          console.error('Spine load failed:', err);
+          // Proceed without spine model so particles/legend still render
+          spineReady = true;
+          maybeBuildScene();
+        }
       );
     }
   );
