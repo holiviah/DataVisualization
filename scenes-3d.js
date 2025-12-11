@@ -1,21 +1,7 @@
-/**
- * Copilot: This file defines the 33 scenes of Frankenstein (2025)
- * mapped to the 33 vertebrae of the spinal cord.
- *
- * Use this structure for every scene:
- * {
- *   id: Number,                 // 1–33, in story order
- *   scene: String,              // short scene title
- *   section: "A"|"B"|"C"|"D"|"E",
- *   sectionLabel: String,       // e.g. "Exposition / Cervical"
- *   vertebraIndex: Number,      // 1–33, same as id for now
- * }
- */
+// Frankenstein 2025 – Emotional Spine data for 3D streamline chart
+// All 33 scenes with emotions, intensities, and rich qualitative notes
 
-// Frankenstein (2025) – Emotional Spine data and grouping helpers
-// Exported for use in the 3D visualization
-
-export const SCENES = [
+const SCENES = [
   // ===== Section A – Cervical – Exposition (Scenes 1–7) =====
   {
     id: 1,
@@ -392,7 +378,7 @@ export const SCENES = [
 
 // ===== Emotion color palette (horror-tuned for Frankenstein) =====
 // Clustered into dark, rich, slightly desaturated colors that feel gothic and melancholic
-export const EMOTION_COLORS = {
+const EMOTION_COLORS = {
   // Reds + Magentas (fear, horror, anger, betrayal, revenge)
   dread:       0xc41e3a,  // Deep blood red
   horror:      0xff1744,  // Vivid red
@@ -405,8 +391,8 @@ export const EMOTION_COLORS = {
   // Purples + Blues (grief, despair, dread, melancholy)
   grief:       0x7b1fa2,  // Deep purple
   despair:     0x512da8,  // Darker purple
-  loneliness: 0x673ab7,  // Medium-dark purple
-  foreboding: 0x1a237e,  // Deep blue-black
+  loneliness:  0x673ab7,  // Medium-dark purple
+  foreboding:  0x1a237e,  // Deep blue-black
   unease:      0x0277bd,  // Deep cyan-blue
   anxiety:     0x01579b,  // Very dark blue
 
@@ -427,77 +413,5 @@ export const EMOTION_COLORS = {
   shock:       0xf9a825,  // Muted gold (stands out)
 
   // Warm lighter (warmth for gentler moments)
-  warmth:      0xd4863e,  // Warm burnt sienna
-  guilt:       0xff8c42,
-  devastation: 0x9b5dff,
-  wonder_alt:  0x4fd4ff
+  warmth:      0xd4863e   // Warm burnt sienna
 };
-
-// High-level emotion groups for legend + colors
-export const EMOTION_GROUPS = {
-  fear: {
-    key: "fear",
-    label: "Fear / Threat",
-    color: 0x68ffa2,  // Green
-    members: [
-      "dread", "foreboding", "unease",
-      "anxiety", "shock", "horror", "panic",
-      "existential horror", "claustrophobia", "tension"
-    ]
-  },
-  sadness: {
-    key: "sadness",
-    label: "Sadness / Loss",
-    color: 0x47f2ff,  // Cyan
-    members: [
-      "grief", "sorrow", "heartbreak",
-      "devastation", "despair",
-      "loneliness", "melancholy", "bittersweet"
-    ]
-  },
-  anger: {
-    key: "anger",
-    label: "Anger / Conflict",
-    color: 0xff3ead,  // Pink
-    members: [
-      "anger", "betrayal", "rage",
-      "revenge", "moral unease", "guilt", "humiliation"
-    ]
-  },
-  hope: {
-    key: "hope",
-    label: "Hope / Warmth",
-    color: 0xffab56,  // Orange
-    members: [
-      "hope", "warmth", "tenderness",
-      "admiration", "relief", "pride"
-    ]
-  },
-  curiosity: {
-    key: "curiosity",
-    label: "Curiosity / Wonder",
-    color: 0xc444ff,  // Purple
-    members: [
-      "curiosity", "intrigue", "fascination",
-      "awe", "anticipation", "wonder"
-    ]
-  }
-};
-
-export const NEUTRAL_EMOTION_GROUP = {
-  key: "neutral",
-  label: "Other",
-  color: 0xffffff,
-  members: []
-};
-
-export function getEmotionGroupFor(emotion = "") {
-  const normalized = emotion.toLowerCase();
-  const groups = Object.values(EMOTION_GROUPS);
-  const found = groups.find((group) => group.key === normalized || group.members.includes(normalized));
-  return found || NEUTRAL_EMOTION_GROUP;
-}
-
-export function getEmotionColor(emotion = "") {
-  return getEmotionGroupFor(emotion).color || 0xffffff;
-}
