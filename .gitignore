@@ -1,3 +1,4 @@
 node_modules/
 image/logo.png
 image/*.png
+!image/info.png
