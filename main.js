@@ -255,6 +255,7 @@ function init() {
   raycaster = new THREE.Raycaster();
   raycaster.params.Points = { threshold: 0.18 };
 
+  createBackgroundParticles();
   buildLegend();
   resetInfo();
 
@@ -302,14 +303,15 @@ function createCircleTexture(blurAmount = 0) {
 }
 
 function createBackgroundParticles() {
-  const count = 1800;
+  const count = 6000;
   const positions = new Float32Array(count * 3);
   const colors = new Float32Array(count * 3);
   const seeds = new Float32Array(count * 3);
+  const sizes = new Float32Array(count);
   const palette = Object.values(EMOTION_COLORS);
 
   for (let i = 0; i < count; i++) {
-    const radius = 7 + Math.random() * 3.5;
+    const radius = 3 + Math.random() * 10;
     const theta = Math.acos(2 * Math.random() - 1);
     const phi = Math.random() * Math.PI * 2;
     const x = radius * Math.sin(theta) * Math.cos(phi);
@@ -320,15 +322,42 @@ function createBackgroundParticles() {
     positions[i * 3 + 1] = y;
     positions[i * 3 + 2] = z;
 
-    const colorHex = palette[Math.floor(Math.random() * palette.length)] || 0xffffff;
-    colors[i * 3 + 0] = ((colorHex >> 16) & 255) / 255;
-    colors[i * 3 + 1] = ((colorHex >> 8) & 255) / 255;
-    colors[i * 3 + 2] = (colorHex & 255) / 255;
+    // Random intensity factor to simulate varying opacity (0.2-0.5 range mapped to color brightness)
+    const intensity = 0.4 + Math.random() * 0.6; // 0.4-1.0 brightness multiplier
+    
+    // Whimsical: mix of soft whites, pale colors
+    const useWhite = Math.random() > 0.4;
+    if (useWhite) {
+      colors[i * 3 + 0] = (0.9 + Math.random() * 0.1) * intensity;
+      colors[i * 3 + 1] = (0.9 + Math.random() * 0.1) * intensity;
+      colors[i * 3 + 2] = (0.95 + Math.random() * 0.05) * intensity;
+    } else {
+      const colorHex = palette[Math.floor(Math.random() * palette.length)] || 0xffffff;
+      colors[i * 3 + 0] = (((colorHex >> 16) & 255) / 255) * intensity;
+      colors[i * 3 + 1] = (((colorHex >> 8) & 255) / 255) * intensity;
+      colors[i * 3 + 2] = ((colorHex & 255) / 255) * intensity;
+    }
 
     seeds[i * 3 + 0] = Math.random() * 10;
     seeds[i * 3 + 1] = Math.random() * 10;
     seeds[i * 3 + 2] = Math.random() * 10;
+    
+    // Vary sizes: mostly tiny, some slightly bigger for depth
+    sizes[i] = 0.008 + Math.random() * 0.025;
   }
+
+  // Create circular texture for background particles
+  const circleCanvas = document.createElement('canvas');
+  circleCanvas.width = 64;
+  circleCanvas.height = 64;
+  const ctx = circleCanvas.getContext('2d');
+  const gradient = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+  gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
+  gradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.8)');
+  gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, 64, 64);
+  const circleTexture = new THREE.CanvasTexture(circleCanvas);
 
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
@@ -336,12 +365,14 @@ function createBackgroundParticles() {
   geometry.setAttribute('seed', new THREE.BufferAttribute(seeds, 3));
 
   const material = new THREE.PointsMaterial({
-    size: 0.05,
+    size: 0.025,
     vertexColors: true,
     transparent: true,
-    opacity: 0.32,
+    opacity: 0.5,
     depthWrite: false,
-    blending: THREE.AdditiveBlending
+    blending: THREE.AdditiveBlending,
+    sizeAttenuation: true,
+    map: circleTexture
   });
 
   bgParticles = new THREE.Points(geometry, material);
@@ -358,9 +389,11 @@ function updateBackgroundParticles(elapsed) {
     const bx = base[i * 3 + 0];
     const by = base[i * 3 + 1];
     const bz = base[i * 3 + 2];
-    positions[i * 3 + 0] = bx + Math.sin(elapsed * 0.18 + seeds[i * 3 + 0]) * 0.18;
-    positions[i * 3 + 1] = by + Math.cos(elapsed * 0.2 + seeds[i * 3 + 1]) * 0.22;
-    positions[i * 3 + 2] = bz + Math.sin(elapsed * 0.16 + seeds[i * 3 + 2]) * 0.18;
+    // Gentle, dreamy floating motion
+    const drift = seeds[i * 3 + 0] * 0.1;
+    positions[i * 3 + 0] = bx + Math.sin(elapsed * 0.08 + drift) * 0.12;
+    positions[i * 3 + 1] = by + Math.cos(elapsed * 0.06 + seeds[i * 3 + 1]) * 0.15 + Math.sin(elapsed * 0.04) * 0.05;
+    positions[i * 3 + 2] = bz + Math.sin(elapsed * 0.07 + seeds[i * 3 + 2]) * 0.12;
   }
   bgParticles.geometry.attributes.position.needsUpdate = true;
 }
@@ -739,6 +772,31 @@ function buildLegend() {
   intensitySection.appendChild(scaleContainer);
   
   legendContent.appendChild(intensitySection);
+  
+  // Inspiration credit section
+  const creditSection = document.createElement('div');
+  creditSection.className = 'legend-section';
+  creditSection.style.marginTop = '16px';
+  creditSection.style.paddingTop = '12px';
+  creditSection.style.borderTop = '1px solid rgba(255, 255, 255, 0.1)';
+  creditSection.style.fontSize = '11px';
+  creditSection.style.color = '#8a8ca8';
+  creditSection.style.lineHeight = '1.4';
+  
+  const creditText = document.createElement('span');
+  creditText.textContent = 'Inspired by ';
+  
+  const creditLink = document.createElement('a');
+  creditLink.href = 'https://www.nature.com/immersive/d41586-019-03165-4/index.html';
+  creditLink.target = '_blank';
+  creditLink.textContent = 'Nature 150';
+  creditLink.style.color = '#a0a2c0';
+  creditLink.style.textDecoration = 'underline';
+  creditLink.style.pointerEvents = 'auto';
+  
+  creditSection.appendChild(creditText);
+  creditSection.appendChild(creditLink);
+  legendContent.appendChild(creditSection);
 }
 
 function resetInfo() {
@@ -799,9 +857,17 @@ function updateHover() {
 function highlightGroup(target) {
   emotionGroups.forEach((g) => {
     const particles = g.children[0];
-    // Keep particles static; no size or opacity changes on hover.
-    particles.material.size = particles.userData.particleSizes[0];
-    particles.material.opacity = 0.95;
+    const baseSize = particles.userData.particleSizes[0];
+    
+    if (g === target) {
+      // Hovered particle: grow 1.5x bigger and full opacity
+      particles.material.size = baseSize * 1.5;
+      particles.material.opacity = 1.0;
+    } else {
+      // Non-hovered particles: normal size, slightly dimmed
+      particles.material.size = baseSize;
+      particles.material.opacity = target ? 0.6 : 0.95;
+    }
   });
 }
 
